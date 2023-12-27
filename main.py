@@ -533,6 +533,7 @@ def search_and_respond_2(address, queue):
 
     #make_user_data_csv(new_df)
 
+ 
 #makes a dataframe and stores it in a csv file
 def make_user_data_csv(df):
     old_df = pd.read_csv('all_events.csv')
