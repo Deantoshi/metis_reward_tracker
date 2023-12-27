@@ -12,15 +12,16 @@ from concurrent.futures import ThreadPoolExecutor
 app = Flask(__name__)
 
 # Replace with the actual Optimism RPC URL
-optimism_rpc_url = 'https://linea-mainnet.infura.io/v3/e2b4d9fa19c748489fb6c0d6bf411be4'
+# optimism_rpc_url = 'https://linea-mainnet.infura.io/v3/e2b4d9fa19c748489fb6c0d6bf411be4'
+optimism_rpc_url = 'https://andromeda.metis.io'
 
 # Create a Web3 instance to connect to the Optimism blockchain
 web3 = Web3(Web3.HTTPProvider(optimism_rpc_url))
 web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
 LATEST_BLOCK = web3.eth.get_block_number()
-FROM_BLOCK = 1070504 - 1000
-# FROM_BLOCK = 0
+# FROM_BLOCK = 1070504 - 1000
+FROM_BLOCK = 0
 
 # Replace with the actual Aave V2 contract address
 # contract_address = "0x871AfF0013bE6218B61b28b274a6F53DB131795F"
@@ -29,15 +30,15 @@ FROM_BLOCK = 1070504 - 1000
 #gets how many decimals our reserve is
 def get_reserve_decimals(reserve_address):
     decimals = 0
-    if reserve_address == '0x4AF15ec2A0BD43Db75dd04E62FAA3B8EF36b00d5': # dai
-        decimals = 1e18
-    elif reserve_address == '0x176211869cA2b568f2A7D4EE941E073a821EE1ff': # usdc
+    if reserve_address == '0xEA32A96608495e54156Ae48931A7c20f0dcc1a21': # usdc
         decimals = 1e6
-    elif reserve_address == '0xA219439258ca9da29E9Cc4cE5596924745e12B93': # usdt
+    elif reserve_address == '0xbB06DCA3AE6887fAbF931640f67cab3e3a16F4dC': # usdt
         decimals = 1e6
-    elif reserve_address == '0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f': # weth
+    elif reserve_address == '0x433E43047B95cB83517abd7c9978Bdf7005E9938': # wbtc
+        decimals = 1e8
+    elif reserve_address == '0x420000000000000000000000000000000000000A': # weth
         decimals = 1e18
-    elif reserve_address == '0x3aAB2285ddcDdaD8edf438C1bAB47e1a9D05a9b4': # wbtc
+    elif reserve_address == '0xDeadDeAddeAddEAddeadDEaDDEAdDeaDDeAD0000': # metis
         decimals = 1e8
     
     return decimals
@@ -56,13 +57,14 @@ def get_tx_usd_amount(reserve_address, token_amount):
 #gets our web3 contract object
 # @cache
 def get_contract():
-    contract_address = "0x871AfF0013bE6218B61b28b274a6F53DB131795F"
+    contract_address = "0x65dEc665ea1e96Ee5203DB321b5Cd413b81B2bd2"
     contract_abi = [{"anonymous":False,"inputs":[{"indexed":True,"internalType":"address","name":"reserve","type":"address"},{"indexed":False,"internalType":"address","name":"user","type":"address"},{"indexed":True,"internalType":"address","name":"onBehalfOf","type":"address"},{"indexed":False,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":False,"internalType":"uint256","name":"borrowRateMode","type":"uint256"},{"indexed":False,"internalType":"uint256","name":"borrowRate","type":"uint256"},{"indexed":True,"internalType":"uint16","name":"referral","type":"uint16"}],"name":"Borrow","type":"event"},{"anonymous":False,"inputs":[{"indexed":True,"internalType":"address","name":"reserve","type":"address"},{"indexed":False,"internalType":"address","name":"user","type":"address"},{"indexed":True,"internalType":"address","name":"onBehalfOf","type":"address"},{"indexed":False,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":True,"internalType":"uint16","name":"referral","type":"uint16"}],"name":"Deposit","type":"event"},{"anonymous":False,"inputs":[{"indexed":True,"internalType":"address","name":"target","type":"address"},{"indexed":True,"internalType":"address","name":"initiator","type":"address"},{"indexed":True,"internalType":"address","name":"asset","type":"address"},{"indexed":False,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":False,"internalType":"uint256","name":"premium","type":"uint256"},{"indexed":False,"internalType":"uint16","name":"referralCode","type":"uint16"}],"name":"FlashLoan","type":"event"},{"anonymous":False,"inputs":[{"indexed":True,"internalType":"address","name":"collateralAsset","type":"address"},{"indexed":True,"internalType":"address","name":"debtAsset","type":"address"},{"indexed":True,"internalType":"address","name":"user","type":"address"},{"indexed":False,"internalType":"uint256","name":"debtToCover","type":"uint256"},{"indexed":False,"internalType":"uint256","name":"liquidatedCollateralAmount","type":"uint256"},{"indexed":False,"internalType":"address","name":"liquidator","type":"address"},{"indexed":False,"internalType":"bool","name":"receiveAToken","type":"bool"}],"name":"LiquidationCall","type":"event"},{"anonymous":False,"inputs":[],"name":"Paused","type":"event"},{"anonymous":False,"inputs":[{"indexed":True,"internalType":"address","name":"reserve","type":"address"},{"indexed":True,"internalType":"address","name":"user","type":"address"}],"name":"RebalanceStableBorrowRate","type":"event"},{"anonymous":False,"inputs":[{"indexed":True,"internalType":"address","name":"reserve","type":"address"},{"indexed":True,"internalType":"address","name":"user","type":"address"},{"indexed":True,"internalType":"address","name":"repayer","type":"address"},{"indexed":False,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Repay","type":"event"},{"anonymous":False,"inputs":[{"indexed":True,"internalType":"address","name":"reserve","type":"address"},{"indexed":False,"internalType":"uint256","name":"liquidityRate","type":"uint256"},{"indexed":False,"internalType":"uint256","name":"stableBorrowRate","type":"uint256"},{"indexed":False,"internalType":"uint256","name":"variableBorrowRate","type":"uint256"},{"indexed":False,"internalType":"uint256","name":"liquidityIndex","type":"uint256"},{"indexed":False,"internalType":"uint256","name":"variableBorrowIndex","type":"uint256"}],"name":"ReserveDataUpdated","type":"event"},{"anonymous":False,"inputs":[{"indexed":True,"internalType":"address","name":"reserve","type":"address"},{"indexed":True,"internalType":"address","name":"user","type":"address"}],"name":"ReserveUsedAsCollateralDisabled","type":"event"},{"anonymous":False,"inputs":[{"indexed":True,"internalType":"address","name":"reserve","type":"address"},{"indexed":True,"internalType":"address","name":"user","type":"address"}],"name":"ReserveUsedAsCollateralEnabled","type":"event"},{"anonymous":False,"inputs":[{"indexed":True,"internalType":"address","name":"reserve","type":"address"},{"indexed":True,"internalType":"address","name":"user","type":"address"},{"indexed":False,"internalType":"uint256","name":"rateMode","type":"uint256"}],"name":"Swap","type":"event"},{"anonymous":False,"inputs":[],"name":"Unpaused","type":"event"},{"anonymous":False,"inputs":[{"indexed":True,"internalType":"address","name":"reserve","type":"address"},{"indexed":True,"internalType":"address","name":"user","type":"address"},{"indexed":True,"internalType":"address","name":"to","type":"address"},{"indexed":False,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Withdraw","type":"event"},{"inputs":[],"name":"FLASHLOAN_PREMIUM_TOTAL","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"LENDINGPOOL_REVISION","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"MAX_NUMBER_RESERVES","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"MAX_STABLE_RATE_BORROW_SIZE_PERCENT","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"asset","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"},{"internalType":"uint256","name":"interestRateMode","type":"uint256"},{"internalType":"uint16","name":"referralCode","type":"uint16"},{"internalType":"address","name":"onBehalfOf","type":"address"}],"name":"borrow","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"asset","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"},{"internalType":"address","name":"onBehalfOf","type":"address"},{"internalType":"uint16","name":"referralCode","type":"uint16"}],"name":"deposit","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"asset","type":"address"},{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"},{"internalType":"uint256","name":"balanceFromBefore","type":"uint256"},{"internalType":"uint256","name":"balanceToBefore","type":"uint256"}],"name":"finalizeTransfer","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"receiverAddress","type":"address"},{"internalType":"address[]","name":"assets","type":"address[]"},{"internalType":"uint256[]","name":"amounts","type":"uint256[]"},{"internalType":"uint256[]","name":"modes","type":"uint256[]"},{"internalType":"address","name":"onBehalfOf","type":"address"},{"internalType":"bytes","name":"params","type":"bytes"},{"internalType":"uint16","name":"referralCode","type":"uint16"}],"name":"flashLoan","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"getAddressesProvider","outputs":[{"internalType":"contract ILendingPoolAddressesProvider","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"asset","type":"address"}],"name":"getConfiguration","outputs":[{"components":[{"internalType":"uint256","name":"data","type":"uint256"}],"internalType":"struct DataTypes.ReserveConfigurationMap","name":"","type":"tuple"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"asset","type":"address"}],"name":"getReserveData","outputs":[{"components":[{"components":[{"internalType":"uint256","name":"data","type":"uint256"}],"internalType":"struct DataTypes.ReserveConfigurationMap","name":"configuration","type":"tuple"},{"internalType":"uint128","name":"liquidityIndex","type":"uint128"},{"internalType":"uint128","name":"variableBorrowIndex","type":"uint128"},{"internalType":"uint128","name":"currentLiquidityRate","type":"uint128"},{"internalType":"uint128","name":"currentVariableBorrowRate","type":"uint128"},{"internalType":"uint128","name":"currentStableBorrowRate","type":"uint128"},{"internalType":"uint40","name":"lastUpdateTimestamp","type":"uint40"},{"internalType":"address","name":"aTokenAddress","type":"address"},{"internalType":"address","name":"stableDebtTokenAddress","type":"address"},{"internalType":"address","name":"variableDebtTokenAddress","type":"address"},{"internalType":"address","name":"interestRateStrategyAddress","type":"address"},{"internalType":"uint8","name":"id","type":"uint8"}],"internalType":"struct DataTypes.ReserveData","name":"","type":"tuple"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"asset","type":"address"}],"name":"getReserveNormalizedIncome","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"asset","type":"address"}],"name":"getReserveNormalizedVariableDebt","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getReservesList","outputs":[{"internalType":"address[]","name":"","type":"address[]"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserAccountData","outputs":[{"internalType":"uint256","name":"totalCollateralETH","type":"uint256"},{"internalType":"uint256","name":"totalDebtETH","type":"uint256"},{"internalType":"uint256","name":"availableBorrowsETH","type":"uint256"},{"internalType":"uint256","name":"currentLiquidationThreshold","type":"uint256"},{"internalType":"uint256","name":"ltv","type":"uint256"},{"internalType":"uint256","name":"healthFactor","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserConfiguration","outputs":[{"components":[{"internalType":"uint256","name":"data","type":"uint256"}],"internalType":"struct DataTypes.UserConfigurationMap","name":"","type":"tuple"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"asset","type":"address"},{"internalType":"address","name":"aTokenAddress","type":"address"},{"internalType":"address","name":"stableDebtAddress","type":"address"},{"internalType":"address","name":"variableDebtAddress","type":"address"},{"internalType":"address","name":"interestRateStrategyAddress","type":"address"}],"name":"initReserve","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"contract ILendingPoolAddressesProvider","name":"provider","type":"address"}],"name":"initialize","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"collateralAsset","type":"address"},{"internalType":"address","name":"debtAsset","type":"address"},{"internalType":"address","name":"user","type":"address"},{"internalType":"uint256","name":"debtToCover","type":"uint256"},{"internalType":"bool","name":"receiveAToken","type":"bool"}],"name":"liquidationCall","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"paused","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"asset","type":"address"},{"internalType":"address","name":"user","type":"address"}],"name":"rebalanceStableBorrowRate","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"asset","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"},{"internalType":"uint256","name":"rateMode","type":"uint256"},{"internalType":"address","name":"onBehalfOf","type":"address"}],"name":"repay","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"asset","type":"address"},{"internalType":"uint256","name":"configuration","type":"uint256"}],"name":"setConfiguration","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bool","name":"val","type":"bool"}],"name":"setPause","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"asset","type":"address"},{"internalType":"address","name":"rateStrategyAddress","type":"address"}],"name":"setReserveInterestRateStrategyAddress","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"asset","type":"address"},{"internalType":"bool","name":"useAsCollateral","type":"bool"}],"name":"setUserUseReserveAsCollateral","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"asset","type":"address"},{"internalType":"uint256","name":"rateMode","type":"uint256"}],"name":"swapBorrowRateMode","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"asset","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"},{"internalType":"address","name":"to","type":"address"}],"name":"withdraw","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"nonpayable","type":"function"}]
-    
     # Create contract instance
     contract = web3.eth.contract(address=contract_address, abi=contract_abi)
 
     return contract
+
+# print(get_contract())
 
 #returns our lists
 def user_data(user_address, events, enum_name):
@@ -85,7 +87,7 @@ def user_data(user_address, events, enum_name):
         payload_address = event['args'][user].lower()
         tx_hash = event['transactionHash'].hex()
         
-        if payload_address.lower() == '0x9546f673ef71ff666ae66d01fd6e7c6dae5a9995'.lower():
+        if payload_address.lower() == '0x4d8d90FAF90405b9743Ce600E98A2Aa8CdF579a0'.lower():
             if enum_name == 'LEND' or enum_name == 'BORROW':
                 user = 'onBehalfOf'
                 payload_address = event['args'][user].lower()
@@ -135,7 +137,7 @@ def handle_weth_gateway(event, enum_name):
 
     payload_address = event['args']['user'].lower()
 
-    if payload_address.lower() == '0x9546f673ef71ff666ae66d01fd6e7c6dae5a9995'.lower():
+    if payload_address.lower() == '0x4d8d90FAF90405b9743Ce600E98A2Aa8CdF579a0'.lower():
         if enum_name == 'LEND' or enum_name == 'BORROW':
             user = 'onBehalfOf'
             payload_address = event['args'][user].lower()
@@ -355,18 +357,11 @@ def get_borrow_transactions(user_address, contract):
     print('Events found in: ', time.time() - start_time)
 
     if len(events) > 1:
-        if user_address == '0x764fdcdbca9998e5ee10b3370a74044f43ed28e2' or user_address == '0x6995fb91e61e98ae8686e299f51e0b2db7fb853b':
-            try:
-                # df = user_data(user_address, events, 'BORROW')
-                df = user_data_2(user_address, events, 'BORROW')
-            except:
-                df = pd.DataFrame()
-        else:
-            try:
-                df = user_data(user_address, events, 'BORROW')
-                # df = user_data_2(user_address, events, 'BORROW')
-            except:
-                df = pd.DataFrame()
+        try:
+            # df = user_data(user_address, events, 'BORROW')
+            df = user_data_2(user_address, events, 'BORROW')
+        except:
+            df = pd.DataFrame()
 
     return df
 
@@ -379,18 +374,11 @@ def get_lend_transactions(user_address, contract):
     events = get_lend_events(contract)
 
     if len(events) > 1:
-        if user_address == '0x764fdcdbca9998e5ee10b3370a74044f43ed28e2' or user_address == '0x6995fb91e61e98ae8686e299f51e0b2db7fb853b':
-            try:
-                # df = user_data(user_address, events, 'LEND')
-                df = user_data_2(user_address, events, 'LEND')
-            except:
-                df = pd.DataFrame()
-        else:
-            try:
-                df = user_data(user_address, events, 'LEND')
-                # df = user_data_2(user_address, events, 'LEND')
-            except:
-                df = pd.DataFrame()
+        try:
+            # df = user_data(user_address, events, 'LEND')
+            df = user_data_2(user_address, events, 'LEND')
+        except:
+            df = pd.DataFrame()
 
     return df
 
@@ -404,18 +392,11 @@ def get_repay_transactions(user_address, contract):
     events = get_repay_events(contract)
 
     if len(events) > 1:
-        if user_address == '0x764fdcdbca9998e5ee10b3370a74044f43ed28e2' or user_address == '0x6995fb91e61e98ae8686e299f51e0b2db7fb853b':
-            try:
-                # df = user_data(user_address, events, 'REPAY')
-                df = user_data_2(user_address, events, 'REPAY')
-            except:
-                df = pd.DataFrame()
-        else:
-            try:
-                df = user_data(user_address, events, 'REPAY')
-                # df = user_data_2(user_address, events, 'REPAY')
-            except:
-                df = pd.DataFrame()
+        try:
+            # df = user_data(user_address, events, 'REPAY')
+            df = user_data_2(user_address, events, 'REPAY')
+        except:
+            df = pd.DataFrame()
     
     return df
 
@@ -426,18 +407,11 @@ def get_collateralalise_transactions(user_address, contract):
     
     events = get_collateralise_events(contract)
     if len(events) > 1:
-        if user_address == '0x764fdcdbca9998e5ee10b3370a74044f43ed28e2' or user_address == '0x6995fb91e61e98ae8686e299f51e0b2db7fb853b':
-            try:
-                # df = user_data(user_address, events, 'COLLATERALISE')
-                df = user_data_2(user_address, events, 'COLLATERALISE')
-            except:
-                df = pd.DataFrame()
-        else:
-            try:
-                df = user_data(user_address, events, 'COLLATERALISE')
-                # df = user_data_2(user_address, events, 'COLLATERALISE')
-            except:
-                df = pd.DataFrame()
+        try:
+            # df = user_data(user_address, events, 'COLLATERALISE')
+            df = user_data_2(user_address, events, 'COLLATERALISE')
+        except:
+            df = pd.DataFrame()
 
     return df
 
@@ -607,49 +581,51 @@ def handle_gateway_collateralise():
     make_user_data_csv(collateralize_df)
 
     return
+contract = get_contract()
+print(get_repay_events(contract))
 
-#reads from csv
-@app.route("/transactions/", methods=["POST"])
-def get_transactions():
+# #reads from csv
+# @app.route("/transactions/", methods=["POST"])
+# def get_transactions():
 
-    data = json.loads(request.data)  # Parse JSON string into JSON object
+#     data = json.loads(request.data)  # Parse JSON string into JSON object
 
-    print(data)
-    address = data['address']
-    address = address.lower()
-    print(address)
+#     print(data)
+#     address = data['address']
+#     address = address.lower()
+#     print(address)
 
-    # Create a queue to store the search result
-    result_queue = queue.Queue()
+#     # Create a queue to store the search result
+#     result_queue = queue.Queue()
 
-    thread = threading.Thread(target=search_and_respond_2, args=(address, result_queue))
-    thread.start()
+#     thread = threading.Thread(target=search_and_respond_2, args=(address, result_queue))
+#     thread.start()
     
-    response = result_queue.get()
+#     response = result_queue.get()
 
-    return jsonify(response), 200
+#     return jsonify(response), 200
 
-#get v3
-#makes our csv
-@app.route("/test/<address>", methods=["GET"])
-def balance_of(address):
+# #get v3
+# #makes our csv
+# @app.route("/test/<address>", methods=["GET"])
+# def balance_of(address):
     
-    address = address.lower()
+#     address = address.lower()
 
-    df = get_all_user_transactions(address)
+#     df = get_all_user_transactions(address)
 
-    response = make_api_response_string(df)
+#     response = make_api_response_string(df)
 
-    # Create a queue to store the search result
-    result_queue = queue.Queue()
+#     # Create a queue to store the search result
+#     result_queue = queue.Queue()
 
-    thread = threading.Thread(target=search_and_respond, args=(address, result_queue))
-    thread.start()
+#     thread = threading.Thread(target=search_and_respond, args=(address, result_queue))
+#     thread.start()
     
-    response = result_queue.get()
+#     response = result_queue.get()
 
-    return jsonify(response), 200
+#     return jsonify(response), 200
 
 
-if __name__ == "__main__":
-    app.run()
+# if __name__ == "__main__":
+#     app.run()
