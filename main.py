@@ -75,6 +75,7 @@ def get_unclaimed_metis_amount():
     reward_list = ['0xdeaddeaddeaddeaddeaddeaddeaddeaddead0000', '0xe1537fef008944d1c8dcafbace4dc76d31d22dc5']
     user_address_list = get_unique_users()
 
+    # user_address_list = ['0xb9D314FB81Efe57eEf6dBd40c3c379e19e7f6EaE']
     #checksums our addresses
     collateral_list = [web3.to_checksum_address(x) for x in collateral_list]
     reward_list = [web3.to_checksum_address(x) for x in reward_list]
@@ -84,33 +85,52 @@ def get_unclaimed_metis_amount():
 
 
     user_list = []
-    asset_list = []
     unclaimed_reward_list = []
     unclaimed_amount_list = []
 
+    i = 0
     #loops through all users, collaterals, and rewards
     for user in user_address_list:
-        for asset in collateral_list:
-            for reward in reward_list:
-                
-                #finds out how much unclaimed rewards they have
-                unclaimed_reward_amount = contract.functions.getUserAssetData(user, asset, reward).call()
+        print(i, '/', len(user_address_list))
+        i += 1
+        #finds out how much unclaimed rewards they have
+        unclaimed_reward_data = contract.functions.getAllUserRewardsBalance(collateral_list, user).call()
+        
+        if len(unclaimed_reward_data[1]) > 1:
+            print(unclaimed_reward_data[1])
 
-                #adds info to lists if they have any rewards
-                if unclaimed_reward_amount > 0:
-                    user_list.append(user)
-                    asset_list.append(asset)
-                    unclaimed_reward_list.append(reward)
-                    unclaimed_amount_list.append(unclaimed_reward_amount)
+        reward_token = unclaimed_reward_data[0][0]
+        reward_amount = unclaimed_reward_data[1][0]
+
+        # print(reward_token, reward_amount)
+
+        #adds info to lists if they have any rewards
+        if reward_amount > 0:
+            user_list.append(user)
+            unclaimed_reward_list.append(reward_token)
+            unclaimed_amount_list.append(reward_amount)
     
     df = pd.DataFrame()
     df['wallet_address'] = user_list
-    df['asset'] = asset_list
-    df['unclaimed_reward'] = unclaimed_reward_list
-    df['unclaimed_amount'] = unclaimed_amount_list
+    df['unclaimed_reward_token'] = unclaimed_reward_list
+    df['unclaimed_quantity_raw'] = unclaimed_amount_list
+    
+    df['total_deployment_unclaimed_rewards_raw'] = df['unclaimed_quantity_raw']
+    df['total_deployment_unclaimed_rewards_raw'] = sum(df['total_deployment_unclaimed_rewards_raw'])
+    
+    df.to_csv('deployment_rewards.csv', index=False)
 
     return df
 
+#cleans up our dataframe
+def df_cleanup():
+    df = pd.read_csv('deployment_rewards.csv')
+
+    df['unclaimed_quantity_cleaned'] = df['unclaimed_quantity_raw'].astype(float) / 1e18
+    df['total_deployment_unclaimed_rewards_cleaned'] = df['total_deployment_unclaimed_rewards_raw'].astype(float) / 1e18
+
+    df.to_csv('deployment_rewards.csv', index=False)
+    return
 #gets our web3 contract object
 # @cache
 def get_contract():
@@ -641,6 +661,7 @@ def handle_gateway_collateralise():
     return
 
 get_unclaimed_metis_amount()
+df_cleanup()
 
 # user_address = '0xc4f8d9139d737c711d6af282c87c81c898b2bd66'.lower()
 # get_all_user_transactions(user_address)
